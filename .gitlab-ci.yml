@@ -194,7 +194,7 @@ mpich-hpx-gnu:
     C_COMPILER: gcc
     CMAKE_OPTIONS: -DENABLE_HDF5=OFF -DENABLE_KOKKOS=ON -DENABLE_GRAPHVIZ=ON -DCALIPER_DETAIL=low
     PARTITIONS: skylake-gold
-    SCHEDULER_PARAMETERS: "-N 1 --qos=debug -p ${PARTITIONS}"
+    SCHEDULER_PARAMETERS: "-N 1 -n 8 -c 4 --qos=debug -p ${PARTITIONS}"
     ARCHIVE_SPACK_ENV: "yes"
 
 mpich-legion-gnu:release:
@@ -234,6 +234,8 @@ mpich-hpx-gnu:release:
     CXX_COMPILER: g++
     C_COMPILER: gcc
     CMAKE_OPTIONS: -DENABLE_HDF5=OFF -DENABLE_KOKKOS=ON
+    PARTITIONS: skylake-gold
+    SCHEDULER_PARAMETERS: "-N 1 -n 8 -c 4 --qos=debug -p ${PARTITIONS}"
 
 #------------------------------------------------------------------------------#
 # Build and unit tests for MPI backend with MPICH provider,
@@ -400,6 +402,8 @@ openmpi-hpx-gnu:
     CXX_COMPILER: g++
     C_COMPILER: gcc
     CMAKE_OPTIONS: -DENABLE_HDF5=OFF
+    PARTITIONS: skylake-gold
+    SCHEDULER_PARAMETERS: "-N 1 -n 8 -c 4 --qos=debug -p ${PARTITIONS}"
 
 openmpi-hpx-gnu:release:
   stage: HPX backend
@@ -419,6 +423,8 @@ openmpi-hpx-gnu:release:
     CXX_COMPILER: g++
     C_COMPILER: gcc
     CMAKE_OPTIONS: -DENABLE_HDF5=OFF
+    PARTITIONS: skylake-gold
+    SCHEDULER_PARAMETERS: "-N 1 -n 8 -c 4 --qos=debug -p ${PARTITIONS}"
 
 #------------------------------------------------------------------------------#
 # Build and unit tests for Legion backend with OpenMPI provider,
@@ -552,6 +558,8 @@ mpich-hpx-clang:
     C_COMPILER: clang
     C_FLAGS: ${CXX_FLAGS}
     CMAKE_OPTIONS: -DENABLE_HDF5=OFF -DENABLE_KOKKOS=ON
+    PARTITIONS: skylake-gold
+    SCHEDULER_PARAMETERS: "-N 1 -n 8 -c 4 --qos=debug -p ${PARTITIONS}"
 
 #------------------------------------------------------------------------------#
 # Build and unit tests for MPI backend with MPICH provider,
