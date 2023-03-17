@@ -29,7 +29,7 @@ fill(resize::Field::accessor<wo> a, const F & f) {
 }
 } // namespace detail
 
-// A partition with a field for dynamically resizing it.
+/// A partition with a field for dynamically resizing it.
 struct repartition : with_size, data::prefixes, with_cleanup {
   // Construct a partition with an initial size.
   // f is passed as a task argument, so it must be serializable;
@@ -40,7 +40,8 @@ struct repartition : with_size, data::prefixes, with_cleanup {
         execute<fill<std::decay_t<F>>>(ref, std::forward<F>(f));
       })) {}
 
-  void resize() { // apply sizes stored in the field
+  /// Apply sizes stored in the field.
+  void resize() {
     update(sizes());
   }
 
@@ -328,6 +329,8 @@ struct index : specialization<index_category, index> {
 }; // struct index
 /// \}
 
+/// \cond core
+
 namespace detail {
 // Q is the underlying topology, not to be confused with P which is borrow<Q>.
 template<class Q, bool = std::is_base_of_v<with_ragged<Q>, typename Q::core>>
@@ -339,8 +342,12 @@ struct borrow_meta {
   borrow_meta(typename Q::core &, claims::core &, bool) {}
 };
 } // namespace detail
-template<class T> // core topology
+/// Topology-specific extension to support multi-color topology accessors.
+/// Befriended by the \c borrow_category specialiation that inherits from it.
+/// \tparam T core topology type
+template<class T>
 struct borrow_extra {
+  /// Constructor invoked by \c borrow_category with its arguments.
   borrow_extra(T &, claims::core &, bool) {}
 };
 // An emulation of topo::repartition with borrowed rows.
@@ -363,8 +370,6 @@ struct borrow_partition_base : indirect_base {
   }
   template<class T, typename policy_t<T>::index_space S>
   borrow_partition_base(T & t, util::constant<S>, claims::core & c)
-    // TODO: change all topologies(!) to provide a more precise
-    // get_partition return type
     : borrow_partition_base(
         {&t.template get_region<S>(), &t.template get_partition<S>(), &c}) {}
 
@@ -442,6 +447,7 @@ private:
 template<class>
 struct borrow;
 
+/// Specialization-independent definitions.
 struct borrow_base {
   struct coloring {
     void * topo;
@@ -449,19 +455,24 @@ struct borrow_base {
     bool first;
   };
 
+  /// The core borrow topology for a subtopology.
+  /// \tparam core topology type
   template<class C>
-  using wrap = typename borrow<policy_t<C>>::core; // for subtopologies
+  using wrap = typename borrow<policy_t<C>>::core;
 
+  /// Get the derived object from a \c borrow_extra specialization.
+  /// \param e usually \c *this
+  /// \param the \c borrow_category specialization to which \a e refers
   template<template<class> class C, class T>
   static auto & derived(borrow_extra<C<T>> & e) {
     return static_cast<typename borrow<T>::core &>(e);
   }
 };
 
-// A selection from an underlying topology.  In general, it may have a
-// different number of colors and be partial or non-injective.  Several may be
-// used in concert for many-to-many mappings.  Certain topologies too simple
-// to use repartition are not supported.
+/// A selection from an underlying topology.  In general, it may have a
+/// different number of colors and be partial or non-injective.  Several may
+/// be used in concert for many-to-many mappings.
+/// \note Certain topologies too simple to use repartition are not supported.
 template<class P>
 struct borrow_category : borrow_base,
                          detail::borrow_ragged<typename P::Base>,
@@ -478,6 +489,11 @@ struct borrow_category : borrow_base,
 
   explicit borrow_category(const coloring & c)
     : borrow_category(*static_cast<Base *>(c.topo), *c.clm, c.first) {}
+  /// Borrow a topology.
+  /// \param t underlying core topology
+  /// \param c color of \a t to select, if any, for each color of this object
+  /// \param f whether this is the first of a set of several borrowings used
+  ///   together for many-to-many access
   borrow_category(Base & t, claims::core & c, bool f)
     : borrow_category(t, c, f, index_spaces()) {}
 
@@ -517,7 +533,8 @@ private:
 
   friend typename borrow_category::borrow_extra;
 
-  Base * base;
+  Base * base; ///< The underlying core topology.
+  /// Borrowed versions of each index space.
   util::key_array<Partition, index_spaces> spc;
   claims::core * clm;
   bool first;
@@ -527,6 +544,8 @@ struct detail::base<borrow_category> {
   using type = borrow_base;
 };
 
+/// Specialization for borrowing.
+/// \tparam Q underlying topology
 template<class Q>
 struct borrow : specialization<borrow_category, borrow<Q>> {
   using Base = Q;
@@ -574,6 +593,7 @@ struct borrow_extra<array_category<P>> {
   }
 };
 
+/// \endcond
 /// \}
 } // namespace topo
 
