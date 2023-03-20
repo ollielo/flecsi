@@ -1,5 +1,8 @@
 #include "flecsi/run/backend.hh"
 
+// MSVC defines stderr as a macro
+#undef stderr
+
 namespace po = boost::program_options;
 
 namespace flecsi::run {

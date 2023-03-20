@@ -27,6 +27,9 @@
 #include <utility>
 #include <vector>
 
+// MSVC defines stderr as a macro
+#undef stderr
+
 namespace flecsi {
 
 // forward declarations
@@ -264,7 +267,7 @@ public:
     invoked. In this context a \em thread is defined as an instance of
     execution, and does not imply any other properties. This interface can be
     used to determine the full subscription of the execution instances of the
-    running process that invokded the FleCSI runtime.
+    running process that invoked the FleCSI runtime.
    */
 
   Color threads() const {
@@ -294,7 +297,7 @@ public:
 #endif
 
   static void register_init(void callback()) {
-    init_registry.push_back(callback);
+    init_registry().push_back(callback);
   }
 
   /*--------------------------------------------------------------------------*
@@ -311,10 +314,11 @@ public:
    */
   template<class Topo, typename Topo::index_space Index, typename Field>
   static void add_field_info(field_id_t id) {
-    if(topology_ids_.count(Topo::id()))
+    if(topology_ids().count(Topo::id()))
       flog_fatal("Cannot add fields on an allocated topology");
     constexpr std::size_t NIndex = Topo::index_spaces::size;
-    topology_field_info_map_.try_emplace(Topo::id(), NIndex)
+    topology_field_info_map()
+      .try_emplace(Topo::id(), NIndex)
       .first->second[Topo::index_spaces::template index<Index>]
       .push_back(std::make_shared<data::field_info_t>(
         data::field_info_t{id, sizeof(Field), util::type<Field>()}));
@@ -330,10 +334,10 @@ public:
   template<class Topo, typename Topo::index_space Index = Topo::default_space()>
   static field_info_store_t const & field_info_store() {
     static const field_info_store_t empty;
-    topology_ids_.insert(Topo::id());
+    topology_ids().insert(Topo::id());
 
-    auto const & tita = topology_field_info_map_.find(Topo::id());
-    if(tita == topology_field_info_map_.end())
+    auto const & tita = topology_field_info_map().find(Topo::id());
+    if(tita == topology_field_info_map().end())
       return empty;
 
     return tita->second[Topo::index_spaces::template index<Index>];
@@ -376,9 +380,9 @@ public:
 
 protected:
   // Invoke initialization callbacks.
-  // Call from hiding function in derived classses.
+  // Call from hiding function in derived classes.
   void start() {
-    for(auto ro : init_registry)
+    for(auto ro : init_registry())
       ro();
   }
 
@@ -458,12 +462,18 @@ protected:
     This type allows storage of runtime field information per topology type.
    */
 
-  static inline std::unordered_map<TopologyType,
-    std::vector<field_info_store_t>>
-    topology_field_info_map_;
+  static std::unordered_map<TopologyType, std::vector<field_info_store_t>> &
+  topology_field_info_map() {
+    static std::unordered_map<TopologyType, std::vector<field_info_store_t>>
+      topology_field_info_map_;
+    return topology_field_info_map_;
+  }
 
   /// Set of topology types for which field definitions have been used
-  static inline std::set<TopologyType> topology_ids_;
+  static std::set<TopologyType> & topology_ids() {
+    static std::set<TopologyType> topology_ids_;
+    return topology_ids_;
+  }
 
   /*--------------------------------------------------------------------------*
     Index space data members.
@@ -478,18 +488,27 @@ protected:
   size_t flog_task_count_ = 0;
 
 private:
-  static inline std::vector<void (*)()> init_registry;
+  static std::vector<void (*)()> & init_registry() {
+    static std::vector<void (*)()> init_registry_;
+    return init_registry_;
+  }
 }; // struct context
 
 struct task_local_base {
   struct guard {
     guard() {
-      for(auto * p : all)
-        p->emplace();
+      if(!all.empty()) {
+        all[0]->create_storage();
+        for(auto * p : all)
+          p->emplace();
+      }
     }
     ~guard() {
-      for(auto * p : all)
-        p->reset();
+      if(!all.empty()) {
+        for(auto * p : all)
+          p->reset();
+        all[0]->reset_storage();
+      }
     }
   };
 
@@ -508,6 +527,8 @@ private:
 
   virtual void emplace() = 0;
   virtual void reset() noexcept = 0;
+  virtual void create_storage() {}
+  virtual void reset_storage() noexcept {}
 };
 
 /// \endcond

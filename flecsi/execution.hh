@@ -16,6 +16,9 @@
 #include <boost/program_options.hpp>
 #include <boost/smart_ptr/make_shared.hpp>
 
+// MSVC defines stderr as a macro
+#undef stderr
+
 namespace flecsi {
 
 /// \defgroup runtime Runtime Model
