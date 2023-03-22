@@ -253,41 +253,28 @@ using region_base = local::region;
 using rows = local::rows;
 using prefixes = local::prefixes;
 
-struct borrow : partition {
-  using Value = std::pair<std::size_t, prefixes::row>; // [row,size]
-  static Value make(prefixes::row r,
-    std::size_t c = run::context::instance().color()) {
-    return {c, r};
-  }
-  static std::size_t get_row(const Value & v) {
-    return v.first;
-  }
-  static prefixes_base::row get_size(const Value & v) {
-    return v.second;
+struct borrow : borrow_base {
+  borrow(Claims c) {
+    auto & ctx = run::context::instance();
+    flog_assert(c.size() == ctx.processes(),
+      "sorry: backend needs one selection per process");
+    auto p = ctx.process();
+    const Claim i = c[p];
+    sel = i != nil;
+    flog_assert(
+      !sel || i == p, "sorry: backend does not implement cross-color access");
   }
 
-  borrow(region_base & r,
-    const partition & p,
-    field_id_t f,
-    completeness = incomplete)
-    : partition(r) {
-    // Make sure storage is actually available
-    p[f].synchronize();
-    const auto s = p->get_storage<const Value>(f);
-    switch(s.size()) {
-      case 0:
-        break;
-      case 1: {
-        auto & v = s[0];
-        flog_assert(!v.second || v.first == run::context::instance().color(),
-          "sorry: backend does not implement cross-color access");
-        this->p->nelems = v.second;
-        break;
-      }
-      default:
-        flog_fatal("underlying partition has size " << s.size() << " > 1");
-    }
+  Color size() const {
+    return run::context::instance().processes();
   }
+
+  bool selected() const {
+    return sel;
+  }
+
+private:
+  bool sel;
 };
 
 struct intervals {

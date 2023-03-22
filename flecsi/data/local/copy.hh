@@ -6,36 +6,7 @@
 
 // High-level topology type implementation.
 
-#include "flecsi/topo/color.hh"
-
 namespace flecsi::data {
-namespace local {
-// This differs from topo::claims only in that the field is dense for
-// compatibility with leg::halves.
-struct claims : topo::specialization<topo::column, claims> {
-  using Field = flecsi::field<borrow::Value>;
-  static const Field::definition<claims> field;
-};
-inline const claims::Field::definition<claims> claims::field;
-} // namespace local
-
-struct pointers : local::claims::core {
-  using Value = std::size_t;
-  static constexpr auto & field = local::claims::field;
-
-  // execution.hh is available here, but not accessor.hh.
-  pointers(prefixes &, topo::claims::core & src);
-
-  auto operator*() {
-    return field(*this);
-  }
-
-private:
-  static void expand(topo::claims::Field::accessor<ro>,
-    std::size_t w,
-    local::claims::Field::accessor<wo>);
-};
-
 namespace local {
 
 struct copy_engine {

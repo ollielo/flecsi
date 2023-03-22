@@ -46,7 +46,6 @@ elseif(FLECSI_BACKEND STREQUAL "mpi")
   )
 
   set(data_SOURCES
-    local/copy.cc
     ${data_SOURCES}
   )
 
@@ -61,7 +60,6 @@ elseif(FLECSI_BACKEND STREQUAL "hpx")
   )
 
   set(data_SOURCES
-    local/copy.cc
     ${data_SOURCES}
   )
 

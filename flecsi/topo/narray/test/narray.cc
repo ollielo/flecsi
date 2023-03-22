@@ -1054,7 +1054,7 @@ narray_driver() {
 
       if(FLECSI_BACKEND != FLECSI_BACKEND_mpi &&
          FLECSI_BACKEND != FLECSI_BACKEND_hpx) {
-        auto lm = data::launch::make<data::launch::gather>(m1, 1);
+        auto lm = data::launch::make(m1, data::launch::gather(m1.colors(), 1));
         EXPECT_EQ(test<check_contiguous>(lm), 0);
       }
 
