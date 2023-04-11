@@ -21,11 +21,6 @@ struct trace {
 
   void skip() {}
 
-public:
-  static bool is_tracing() {
-    return false;
-  }
-
 private:
   void start() {}
   void stop() {}
