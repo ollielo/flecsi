@@ -157,15 +157,15 @@ checkpoint_task(const Legion::Task * task,
           char,
           2,
           Legion::coord_t,
-          Realm::AffineAccessor<double, 2, Legion::coord_t>>
-          acc_fid(pr, it);
+          Realm::AffineAccessor<char, 2, Legion::coord_t>>
+          acc_fid(pr, fid, item_size);
         [] {
           if constexpr(W)
             return H5Dwrite;
           else
             return H5Dread;
-        }()(hdf5::dataset(checkpoint_file.hdf5_file_id, n.c_str()),
-          H5T_IEEE_F64LE,
+        }()(hdf5::dataset(checkpoint_file.hdf5_file_id, name.c_str()),
+          hdf5::datatype::bytes(item_size),
           H5S_ALL,
           H5S_ALL,
           H5P_DEFAULT,
