@@ -27,7 +27,7 @@ dependencies_guard::~dependencies_guard() {
 #endif
 }
 
-local::context::context(const arguments::config & c, arguments::action & a)
-  : run::context(c, a, util::mpi::size(), util::mpi::rank()) {}
+local::context::context(const arguments::config & c)
+  : run::context(c, util::mpi::size(), util::mpi::rank()) {}
 
 } // namespace flecsi::run

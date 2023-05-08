@@ -24,7 +24,7 @@ private:
 namespace local {
 
 struct context : run::context {
-  context(const arguments::config &, arguments::action &);
+  context(const arguments::config &);
 };
 
 } // namespace local

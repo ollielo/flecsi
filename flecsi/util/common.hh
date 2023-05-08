@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
-#include <functional>
 #include <limits>
 #include <map>
 #include <type_traits>
